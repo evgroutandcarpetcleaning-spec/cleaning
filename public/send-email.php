@@ -45,11 +45,10 @@ $serviceLabels = [
 ];
 $readableService = isset($serviceLabels[$service]) ? $serviceLabels[$service] : $service;
 
-// Recipient email
+// Email Content
 $to = "evgroutandcarpetcleaning@gmail.com";
 $subject = "New Lead Request: " . $name . " - " . $readableService;
 
-// HTML Email Body
 $htmlContent = '
 <html>
 <head>
@@ -110,17 +109,73 @@ $htmlContent .= '
 </body>
 </html>';
 
-// Email Headers
-$headers = "MIME-Version: 1.0" . "\r\n";
-$headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
-$headers .= "From: EV Cleaning Website <no-reply@evgroutandcarpetcleaning.com.au>" . "\r\n";
-$headers .= "Reply-To: " . $email . "\r\n";
+// Secure Socket SMTP Email Sender Function
+function send_smtp_email($to, $subject, $htmlContent, $fromEmail, $fromName) {
+    $smtpUser = "evgroutandcarpetcleaning@gmail.com";
+    $smtpPass = "iolc whei tond cdct";
+    $smtpHost = "ssl://smtp.gmail.com";
+    $smtpPort = 465;
+    $timeout = 15;
 
-// Send Email
-if (mail($to, $subject, $htmlContent, $headers)) {
+    $socket = fsockopen($smtpHost, $smtpPort, $errno, $errstr, $timeout);
+    if (!$socket) {
+        return false;
+    }
+
+    // Read greeting
+    fgets($socket, 512);
+
+    // EHLO
+    fwrite($socket, "EHLO localhost\r\n");
+    fgets($socket, 512);
+
+    // AUTH LOGIN
+    fwrite($socket, "AUTH LOGIN\r\n");
+    fgets($socket, 512);
+
+    // Send User
+    fwrite($socket, base64_encode($smtpUser) . "\r\n");
+    fgets($socket, 512);
+
+    // Send Pass
+    fwrite($socket, base64_encode($smtpPass) . "\r\n");
+    fgets($socket, 512);
+
+    // MAIL FROM
+    fwrite($socket, "MAIL FROM: <$smtpUser>\r\n");
+    fgets($socket, 512);
+
+    // RCPT TO
+    fwrite($socket, "RCPT TO: <$to>\r\n");
+    fgets($socket, 512);
+
+    // DATA
+    fwrite($socket, "DATA\r\n");
+    fgets($socket, 512);
+
+    // Build mail payload
+    $headers = "MIME-Version: 1.0\r\n";
+    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+    $headers .= "From: \"$fromName\" <$smtpUser>\r\n";
+    $headers .= "Reply-To: <$fromEmail>\r\n";
+    $headers .= "To: <$to>\r\n";
+    $headers .= "Subject: $subject\r\n";
+
+    fwrite($socket, $headers . "\r\n" . $htmlContent . "\r\n.\r\n");
+    fgets($socket, 512);
+
+    // QUIT
+    fwrite($socket, "QUIT\r\n");
+    fclose($socket);
+
+    return true;
+}
+
+// Send SMTP Email
+if (send_smtp_email($to, $subject, $htmlContent, $email, $name)) {
     echo json_encode(["success" => true]);
 } else {
     http_response_code(500);
-    echo json_encode(["success" => false, "error" => "Failed to send email. Please check server SMTP configuration."]);
+    echo json_encode(["success" => false, "error" => "Failed to send email. Please check server SMTP network connectivity."]);
 }
 ?>
