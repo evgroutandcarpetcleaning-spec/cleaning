@@ -16,7 +16,10 @@ const EMAIL_PASS = process.env.EMAIL_PASS || 'iolc whei tond cdct';
 
 // Create nodemailer transporter
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
+  family: 4, // Force IPv4 to bypass Google's SMTP block/timeout on Render's IPv6 range
   auth: {
     user: EMAIL_USER,
     pass: EMAIL_PASS
