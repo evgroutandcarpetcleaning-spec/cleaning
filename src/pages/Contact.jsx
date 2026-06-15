@@ -34,7 +34,7 @@ function Contact() {
       const backendUrl = import.meta.env.VITE_API_URL || (
         window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
           ? 'http://localhost:5000/api/send-email'
-          : '/api/send-email'
+          : 'https://cleaning-i3ik.onrender.com/api/send-email'
       );
 
       const response = await fetch(backendUrl, {
