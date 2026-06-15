@@ -55,6 +55,37 @@ app.post('/api/send-email', (req, res) => {
   const chosenService = service || serviceType;
   const readableService = serviceLabels[chosenService] || chosenService || 'Not specified';
 
+  // Check if Google Apps Script URL is provided (bypasses Render SMTP port blocking)
+  const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL;
+  if (APPS_SCRIPT_URL) {
+    // Respond to the client immediately for a fast UX
+    res.status(200).json({ success: true });
+
+    // Send email via Apps Script Web App (runs on HTTPS port 443, which is never blocked)
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name,
+        phone,
+        email,
+        service: readableService,
+        location,
+        message
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Google Apps Script email sent successfully:', data);
+    })
+    .catch(error => {
+      console.error('Error sending email via Google Apps Script:', error);
+    });
+    return;
+  }
+
   // Admin email notification options
   const mailOptions = {
     from: `"EV Cleaning Lead" <${EMAIL_USER}>`,
