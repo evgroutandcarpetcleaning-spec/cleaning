@@ -227,13 +227,16 @@ app.post('/api/send-email', (req, res) => {
     `
   };
 
+  // Respond to the client immediately for a fast UX
+  res.status(200).json({ success: true });
+
+  // Send the email asynchronously in the background
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
-      console.error('Error sending email:', error);
-      return res.status(500).json({ success: false, error: 'Failed to send email. Please check server logs.' });
+      console.error('Background email delivery failed:', error);
+    } else {
+      console.log('Background email sent successfully:', info.response);
     }
-    console.log('Email sent successfully:', info.response);
-    return res.status(200).json({ success: true });
   });
 });
 

@@ -269,7 +269,6 @@ function Home() {
                     <input
                       type="tel"
                       placeholder="Phone (e.g. 0412 345 678)"
-                      pattern="[0-9\s\-+()]{8,20}"
                       required
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
