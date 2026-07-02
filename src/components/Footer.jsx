@@ -101,8 +101,8 @@ function Footer() {
         <div className="footer-bottom">
           <p>&copy; {new Date().getFullYear()} EV Grout & Carpet Cleaning. All rights reserved.</p>
           <div className="footer-bottom-links">
-            <Link to="/faq" className="footer-bottom-link">Privacy Policy</Link>
-            <Link to="/faq" className="footer-bottom-link">Terms & Conditions</Link>
+            <Link to="/privacy-policy" className="footer-bottom-link">Privacy Policy</Link>
+            <Link to="/terms-conditions" className="footer-bottom-link">Terms & Conditions</Link>
           </div>
         </div>
       </div>

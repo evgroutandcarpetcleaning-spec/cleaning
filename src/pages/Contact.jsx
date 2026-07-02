@@ -233,6 +233,7 @@ function Contact() {
                       style={{ color: 'var(--white)' }}
                     >
                       <option value="" style={{ color: 'var(--text-main)' }}>-- Choose a Service --</option>
+                      <option value="pressure-washing" style={{ color: 'var(--text-main)' }}>Pressure Washing</option>
                       <option value="tile-grout" style={{ color: 'var(--text-main)' }}>Tile & Grout Deep Clean</option>
                       <option value="regrouting" style={{ color: 'var(--text-main)' }}>Regrouting & Protection Sealing</option>
                       <option value="carpet-steam" style={{ color: 'var(--text-main)' }}>Carpet Steam Cleaning</option>

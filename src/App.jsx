@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import logoImg from './assets/e.v.logo.jpeg';
+import './App.css';
 
 // Import Shared Components
 import Header from './components/Header';
 import Footer from './components/Footer';
 import WhatsAppButton from './components/WhatsAppButton';
+import CallButton from './components/CallButton';
 import MobileCallBar from './components/MobileCallBar';
 import ScrollToTop from './components/ScrollToTop';
 
@@ -16,6 +18,8 @@ import Services from './pages/Services';
 import Gallery from './pages/Gallery';
 import FAQ from './pages/FAQ';
 import Contact from './pages/Contact';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsConditions from './pages/TermsConditions';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -46,6 +50,7 @@ function App() {
 
       {/* Floating Elements */}
       <WhatsAppButton />
+      <CallButton />
       <MobileCallBar />
 
       {/* Shared Navigation Header */}
@@ -60,6 +65,8 @@ function App() {
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-conditions" element={<TermsConditions />} />
         </Routes>
       </main>
 

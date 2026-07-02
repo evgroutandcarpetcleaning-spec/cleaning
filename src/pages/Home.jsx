@@ -5,6 +5,21 @@ import presserImg from '../assets/presser.jpeg';
 import gallery1 from '../assets/gallery1.jpeg';
 import gallery2 from '../assets/gallery2.jpeg';
 import gallery3 from '../assets/gallery3.jpeg';
+import pressureWashBeforeAfter from '../assets/pressure_washing_before_after.png';
+import pressureWashingBanner from '../assets/PRESSURE-WASHING.jpg';
+import tileBanner from '../assets/tile.jpg';
+import carpetBanner from '../assets/carpet.jpg';
+import pressureMobileBanner from '../assets/pressure_mobile.png';
+import carpetMobileBanner from '../assets/carpet-mobile.png';
+import tileMobileBanner from '../assets/tile-mobile.png';
+
+const BANNERS = [
+  { desktop: pressureWashingBanner, mobile: pressureMobileBanner, mobilePos: 'center center' },
+  { desktop: tileBanner, mobile: tileMobileBanner, mobilePos: 'center center' },
+  { desktop: carpetBanner, mobile: carpetMobileBanner, mobilePos: 'center center' }
+];
+
+
 
 // Animated Counter Component
 function AnimatedCounter({ end, suffix = "", delay = 0 }) {
@@ -36,8 +51,82 @@ function AnimatedCounter({ end, suffix = "", delay = 0 }) {
 function Home() {
   const [sliderPosition, setSliderPosition] = useState(50);
 
+  const [activeBannerIndex, setActiveBannerIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveBannerIndex((prev) => (prev + 1) % BANNERS.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const [bookingForm, setBookingForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    serviceType: '',
+    message: ''
+  });
+  const [formSubmitted, setFormSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setBookingForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    if (!bookingForm.name || !bookingForm.phone || !bookingForm.email) return;
+
+    setIsSubmitting(true);
+    setErrorMessage('');
+
+    try {
+      const backendUrl = import.meta.env.VITE_API_URL || (
+        window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+          ? 'http://localhost:5000/api/send-email'
+          : window.location.hostname.includes('onrender.com')
+            ? '/api/send-email'
+            : '/send-email.php'
+      );
+
+      const response = await fetch(backendUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bookingForm),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setFormSubmitted(true);
+        setBookingForm({ name: '', email: '', phone: '', serviceType: '', message: '' });
+      } else {
+        setErrorMessage(data.error || 'Failed to submit request.');
+      }
+    } catch (error) {
+      setErrorMessage('Could not connect to the server.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Top services teaser
   const topServices = [
+    {
+      title: 'Pressure Washing',
+      desc: 'High-pressure water blasting to remove dirt, algae, oil stains, and grime from driveways, pathways, decks, and exterior surfaces.',
+      icon: <Droplet size={24} />,
+      image: presserImg,
+      subServices: [
+        'Driveway and path',
+        'Fence cleaning',
+        'Exterior house wash',
+        'Car park cleaning'
+      ]
+    },
     {
       title: 'Tile & Grout Cleaning',
       desc: 'High pressure extraction process that washes out oil, grease, and stubborn stains from tiles and deep grout lines.',
@@ -60,18 +149,6 @@ function Home() {
         'Stain and spot treatment',
         'Odor removal',
         'End of lease carpet cleaning'
-      ]
-    },
-    {
-      title: 'Pressure Washing',
-      desc: 'High-pressure water blasting to remove dirt, algae, oil stains, and grime from driveways, pathways, decks, and exterior surfaces.',
-      icon: <Droplet size={24} />,
-      image: presserImg,
-      subServices: [
-        'Driveway and path',
-        'Fence cleaning',
-        'Exterior house wash',
-        'Car park cleaning'
       ]
     }
   ];
@@ -99,253 +176,117 @@ function Home() {
       text: 'Superb job regrouting and sealing our master bathroom tiles. The old grout was mouldy and cracked, and now it looks completely fresh and waterproof. Incredible attention to detail!',
       initials: 'RD'
     }
-  ];  // Hero Slides Data
-  const heroSlides = [
-    {
-      tagline: 'Premium Cleaning Services',
-      title: <>Professional <span>Tile, Grout & Carpet</span> Cleaning</>,
-      description: 'Delivering spotless floors, fresh carpets, and sparkling spaces with high-end steam cleaning, regrouting, and stain removal services.',
-      image: '/gallery/hero-tile-clean.png',
-      badgeTitle: 'Certified Experts',
-      badgeDesc: '100% Insured & Trusted'
-    },
-    {
-      tagline: 'Eco-Friendly Deep Extraction',
-      title: <>Premium <span>Steam Carpet</span> Restoration</>,
-      description: 'Flushing out embedded dirt, micro-allergens, dust mites, and stubborn pet stain odors from your carpet fibers.',
-      image: '/gallery/hero-carpet-clean.png',
-      badgeTitle: 'Fast Drying',
-      badgeDesc: 'Walkable in 4-6 Hours'
-    }
-  ];
-
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    email: '',
-    service: '',
-    location: '',
-    message: ''
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState(null);
-
-  const handleHeroSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitStatus(null);
-
-    try {
-      const backendUrl = import.meta.env.VITE_API_URL || (
-        window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-          ? 'http://localhost:5000/api/send-email'
-          : window.location.hostname.includes('onrender.com')
-            ? '/api/send-email'
-            : '/send-email.php'
-      );
-
-      const response = await fetch(backendUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        setSubmitStatus('success');
-        setFormData({ name: '', phone: '', email: '', service: '', location: '', message: '' });
-        setTimeout(() => setSubmitStatus(null), 5000);
-      } else {
-        setSubmitStatus('error');
-      }
-    } catch (error) {
-      console.error('Error submitting hero form:', error);
-      setSubmitStatus('error');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Auto transition hero slides
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, []);
-
-  return (
+  ]; return (
     <div className="page-home">
       {/* 1. Hero Section */}
-      <section className="hero" id="hero">
-        <div className="hero-bg-shapes">
-          <div className="shape shape-1"></div>
-          <div className="shape shape-2"></div>
-          <div className="shape-flare"></div>
-        </div>
-        <div className="container" style={{ paddingBottom: '40px' }}>
-          <div className="hero-content" key={currentSlide} style={{ animation: 'fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}>
-            <div className="hero-tagline-wrapper">
-              <span className="hero-tagline">
-                <Sparkles size={14} /> {heroSlides[currentSlide].tagline}
-              </span>
-            </div>
+      <section className="hero-new" id="hero">
+        {/* Background light blue shape (left side) */}
+        <div className="hero-bg-blur"></div>
 
-            <h1 className="hero-title" id="hero-headline">
-              {heroSlides[currentSlide].title}
+        <div className="hero-custom-grid">
+          
+          {/* Left Column - Text content */}
+          <div className="hero-left-col">
+            <h1 className="hero-main-title">
+              Professional Tile & Grout<br />
+              Cleaners in Campbelltown
             </h1>
 
-            <p className="hero-description" id="hero-subheading">
-              {heroSlides[currentSlide].description}
+            <p className="hero-subtitle">
+              Keep Your Floor and Shower Tiles Looking Spotless and Protected for Longer.
             </p>
-
-            {/* Premium Stepper Tabs replacing basic dots */}
-            <div className="hero-slider-tabs">
-              {heroSlides.map((slide, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentSlide(index)}
-                  className={`slider-tab-btn ${currentSlide === index ? 'active' : ''}`}
-                  aria-label={`Go to slide ${index + 1}`}
-                >
-                  <span className="tab-number">0{index + 1}</span>
-                  <span className="tab-title">
-                    {index === 0 ? "Tile & Grout" : "Carpet Steam"}
-                  </span>
-                  <div className="tab-progress-bg">
-                    {currentSlide === index && <div className="tab-progress-fill"></div>}
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            <div className="hero-buttons">
-              <Link to="/contact" className="btn btn-primary btn-hero-cta" id="hero-quote-cta">
-                Get Free Quote <ArrowRight size={18} />
-              </Link>
-              <Link to="/services" className="btn btn-outline-hero" id="hero-services-cta">
-                Explore Services
-              </Link>
-            </div>
-
-            {/* Quick Trust row */}
-            <div className="hero-trust-row">
-              <div className="trust-item">
-                <ShieldCheck size={16} className="trust-icon" />
-                <span>Eco-Friendly Solutions</span>
-              </div>
-              <div className="trust-item">
-                <ShieldCheck size={16} className="trust-icon" />
-                <span>Fully Licensed & Insured</span>
-              </div>
-              <div className="trust-item">
-                <ShieldCheck size={16} className="trust-icon" />
-                <span>100% Satisfaction Guarantee</span>
-              </div>
+            
+            <h2 className="hero-h2">
+              Expert Tile & Grout Cleaning Campbelltown
+            </h2>
+            
+            <p className="hero-desc">
+              We remove dirt, grime, and tough stains from tiles, then seal them to make future cleaning easier and maintain a lasting shine.
+            </p>
+            
+            <div className="hero-buttons-row">
+              <button className="btn-enquire">
+                ENQUIRE NOW <span className="btn-enquire-icon">↗</span>
+              </button>
+              
+              <a href="tel:0499848519" className="btn-call">
+                <div className="btn-call-icon">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                </div>
+                0499 848 519
+              </a>
             </div>
           </div>
+          
+          {/* Right Column - Separated Image & Form */}
+          <div className="hero-right-col">
+            
+            {/* Custom Badge positioned absolute over the gap */}
+            <div className="hero-custom-badge">
+              {/* Back Ribbon */}
+              <div className="hero-badge-ribbon"></div>
 
-          <div className="hero-form-container" id="hero-quote-form-wrapper">
-            <div className="hero-form-card glass-card">
-              <div className="form-header">
-                <h3>Get an Instant Quote</h3>
-                <p>Australian Owned & Operated Local Specialists</p>
+              <div className="hero-badge-circle">
+                <span style={{ fontSize: '1.3rem', fontWeight: '900', lineHeight: '1', marginTop: '5px' }}>100%</span>
+                <span style={{ fontSize: '0.45rem', fontWeight: '800', letterSpacing: '0.5px' }}>CUSTOMER</span>
+                <div style={{
+                  backgroundColor: '#039be5',
+                  color: 'white',
+                  padding: '4px 10px',
+                  fontSize: '0.55rem',
+                  fontWeight: '800',
+                  marginTop: '4px',
+                  marginBottom: '2px',
+                  width: '120%',
+                  textAlign: 'center',
+                  boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+                }}>
+                  SATISFACTION
+                </div>
+                <span style={{ fontSize: '0.55rem', fontWeight: '800' }}>GUARANTEED</span>
+                <span style={{ fontSize: '0.6rem', color: '#ffea00', marginTop: '2px', letterSpacing: '1px' }}>★★★</span>
               </div>
-
-              <form onSubmit={handleHeroSubmit} className="hero-quote-form">
-                <div className="form-group-row">
-                  <div className="form-group">
-                    <input
-                      type="text"
-                      placeholder="Your Name"
-                      required
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    />
-                  </div>
-                   <div className="form-group">
-                    <input
-                      type="tel"
-                      placeholder="Phone (e.g. 0412 345 678)"
-                      required
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <input
-                    type="email"
-                    placeholder="Email Address"
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  />
-                </div>
-
-                <div className="form-group-row">
-                  <div className="form-group">
-                    <select
-                      value={formData.service}
-                      onChange={(e) => setFormData({ ...formData, service: e.target.value })}
-                      required
-                    >
-                      <option value="">-- Choose Service --</option>
-                      <option value="Tile & Grout Deep Clean">Tile & Grout Cleaning</option>
-                      <option value="Regrouting & Sealing">Regrouting & Sealing</option>
-                      <option value="Carpet Steam Clean">Carpet Steam Cleaning</option>
-                      <option value="Stain & Odor Removal">Stain & Odor Removal</option>
-                      <option value="End of Lease Cleaning">End of Lease Carpet</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <input
-                      type="text"
-                      placeholder="Aussie Postcode / Suburb"
-                      required
-                      value={formData.location}
-                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <textarea
-                    placeholder="Briefly describe your cleaning needs (e.g. 3 rooms carpet, kitchen tiles)..."
-                    rows="2"
-                    value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  ></textarea>
-                </div>
-
-                <button type="submit" className="btn btn-primary btn-submit-quote" disabled={isSubmitting}>
-                  {isSubmitting ? "Sending Request..." : "Request Free Quote Now"}
-                </button>
-              </form>
-
-              {submitStatus === 'success' && (
-                <div className="form-success-banner">
-                  <ShieldCheck size={16} /> Quote request sent! We will contact you within 30 minutes.
-                </div>
-              )}
-
-              {submitStatus === 'error' && (
-                <div className="form-success-banner" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', borderColor: '#EF4444', borderStyle: 'solid', borderWidth: '1px' }}>
-                  <span>⚠️ Connection error. Please try again.</span>
-                </div>
-              )}
             </div>
 
-            {/* A small Trust line beneath the form */}
-            <div className="hero-form-trust">
-              <span>⭐ 4.9/5 Star Local Rated</span>
-              <span className="separator">•</span>
-              <span>100% Insured Experts</span>
+            {/* Image (Left) */}
+            <div className="hero-img-box">
+              <img src={tileBanner} alt="Tile Cleaning Before After" />
+            </div>
+            
+            {/* Form (Right) */}
+            <div className="hero-form-box">
+              <h4>Book A Service</h4>
+              {formSubmitted ? (
+                <div style={{ padding: '20px', backgroundColor: 'rgba(37, 211, 102, 0.1)', border: '1px solid #25D366', borderRadius: '8px', textAlign: 'center', marginTop: '15px' }}>
+                  <p style={{ fontWeight: 'bold', color: '#25D366', marginBottom: '8px' }}>Request Received!</p>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', marginBottom: '15px' }}>We'll contact you shortly.</p>
+                  <button onClick={() => setFormSubmitted(false)} className="hero-form-btn">
+                    Book Another <span className="hero-form-btn-icon">↺</span>
+                  </button>
+                </div>
+              ) : (
+                <form className="hero-form-content" onSubmit={handleFormSubmit}>
+                  <input type="text" name="name" placeholder="Full Name*" value={bookingForm.name} onChange={handleInputChange} required />
+                  <input type="email" name="email" placeholder="Email*" value={bookingForm.email} onChange={handleInputChange} required />
+                  <input type="tel" name="phone" placeholder="Phone*" value={bookingForm.phone} onChange={handleInputChange} required />
+                  <div className="hero-form-select-wrap">
+                    <select name="serviceType" value={bookingForm.serviceType} onChange={handleInputChange} required>
+                      <option value="">Select Service*</option>
+                      <option value="tile-grout">Tile & Grout Cleaning</option>
+                      <option value="carpet-steam">Carpet Cleaning</option>
+                      <option value="pressure-washing">Pressure Washing</option>
+                    </select>
+                    <div className="hero-form-select-icon">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                    </div>
+                  </div>
+                  <textarea name="message" placeholder="Message" rows="2" value={bookingForm.message} onChange={handleInputChange}></textarea>
+                  {errorMessage && <div style={{ color: '#EF4444', fontSize: '0.85rem', marginBottom: '10px' }}>⚠️ {errorMessage}</div>}
+                  <button type="submit" className="hero-form-btn" disabled={isSubmitting}>
+                    {isSubmitting ? 'SUBMITTING...' : 'SUBMIT NOW'} <span className="hero-form-btn-icon">↗</span>
+                  </button>
+                </form>
+              )}
             </div>
           </div>
         </div>
@@ -431,41 +372,41 @@ function Home() {
                     {service.icon}
                   </div>
                 </div>
-                 <div className="service-card-content" style={{ padding: '30px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                   <h3 className="service-title" style={{ fontSize: '1.25rem', marginBottom: '12px' }}>{service.title}</h3>
-                   <p className="service-desc" style={{ color: 'var(--text-light)', fontSize: '0.92rem', lineHeight: '1.6', marginBottom: '15px' }}>{service.desc}</p>
-                   
-                   {service.subServices && (
-                     <div style={{ marginBottom: '25px' }}>
-                       <div style={{ height: '1px', backgroundColor: 'rgba(11,31,58,0.08)', margin: '15px 0' }} />
-                       <h4 style={{ fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--primary-blue)', marginBottom: '12px', fontWeight: '700' }}>What's Included:</h4>
-                       <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                         {service.subServices.map((sub, sIdx) => (
-                           <li key={sIdx} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.9rem', color: 'var(--text-dark)' }}>
-                             <span style={{ 
-                               display: 'inline-flex', 
-                               alignItems: 'center', 
-                               justifyContent: 'center', 
-                               backgroundColor: 'rgba(46, 117, 243, 0.1)', 
-                               color: 'var(--primary-blue)', 
-                               borderRadius: '50%', 
-                               width: '18px', 
-                               height: '18px',
-                               flexShrink: 0
-                             }}>
-                               <Check size={11} style={{ strokeWidth: 3 }} />
-                             </span>
-                             <span style={{ fontWeight: '500' }}>{sub}</span>
-                           </li>
-                         ))}
-                       </ul>
-                     </div>
-                   )}
+                <div className="service-card-content" style={{ padding: '30px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  <h3 className="service-title" style={{ fontSize: '1.25rem', marginBottom: '12px' }}>{service.title}</h3>
+                  <p className="service-desc" style={{ color: 'var(--text-light)', fontSize: '0.92rem', lineHeight: '1.6', marginBottom: '15px' }}>{service.desc}</p>
+
+                  {service.subServices && (
+                    <div style={{ marginBottom: '25px' }}>
+                      <div style={{ height: '1px', backgroundColor: 'rgba(11,31,58,0.08)', margin: '15px 0' }} />
+                      <h4 style={{ fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--primary-blue)', marginBottom: '12px', fontWeight: '700' }}>What's Included:</h4>
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {service.subServices.map((sub, sIdx) => (
+                          <li key={sIdx} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.9rem', color: 'var(--text-dark)' }}>
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              backgroundColor: 'rgba(46, 117, 243, 0.1)',
+                              color: 'var(--primary-blue)',
+                              borderRadius: '50%',
+                              width: '18px',
+                              height: '18px',
+                              flexShrink: 0
+                            }}>
+                              <Check size={11} style={{ strokeWidth: 3 }} />
+                            </span>
+                            <span style={{ fontWeight: '500' }}>{sub}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
 
 
 
-                 </div>
+                </div>
               </div>
             ))}
           </div>
@@ -473,28 +414,28 @@ function Home() {
         </div>
       </section>
 
-      {/* Before & After Grout Restoration Section */}
+      {/* Before & After Pressure Washing Section */}
       <section className="section" style={{ backgroundColor: '#F8FAFC', paddingTop: '60px', paddingBottom: '60px', borderTop: '1px solid rgba(0,0,0,0.03)' }}>
         <div className="container">
           <div className="section-header" style={{ textAlign: 'center', marginBottom: '40px' }}>
             <span className="section-tag">Dramatic Transformations</span>
-            <h2 className="section-title">Before & After Grout Restoration Results</h2>
-            <p className="section-subtitle">See the real-life difference our deep cleaning and sanitization process makes.</p>
+            <h2 className="section-title">Before & After Pressure Washing Results</h2>
+            <p className="section-subtitle">See the real-life difference our high-pressure cleaning systems make on dirty concrete surfaces.</p>
           </div>
 
           <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-            <div className="glass-card" style={{ 
-              padding: '0', 
-              borderRadius: 'var(--br-lg)', 
-              overflow: 'hidden', 
+            <div className="glass-card" style={{
+              padding: '0',
+              borderRadius: 'var(--br-lg)',
+              overflow: 'hidden',
               boxShadow: '0 20px 45px rgba(11,31,58,0.1)',
               position: 'relative',
               border: '1px solid rgba(255, 255, 255, 0.8)'
             }}>
               {/* Image */}
-              <img 
-                src="https://tileguru.ae/wp-content/uploads/2026/02/grout-restoration-sealing-services-2nd-image.png" 
-                alt="Before and After Grout Restoration" 
+              <img
+                src={pressureWashBeforeAfter}
+                alt="Before and After Concrete Driveway Pressure Washing"
                 style={{ width: '100%', height: 'auto', display: 'block' }}
               />
 
@@ -537,35 +478,35 @@ function Home() {
                 After
               </div>
             </div>
-            
+
             {/* Explanatory Info Card below the comparison */}
-            <div className="glass-card" style={{ 
-              marginTop: '30px', 
-              padding: '24px 30px', 
-              borderRadius: 'var(--br-md)', 
-              display: 'flex', 
-              alignItems: 'center', 
+            <div className="glass-card" style={{
+              marginTop: '30px',
+              padding: '24px 30px',
+              borderRadius: 'var(--br-md)',
+              display: 'flex',
+              alignItems: 'center',
               gap: '20px',
               backgroundColor: 'rgba(46, 117, 243, 0.03)',
               border: '1px solid rgba(46, 117, 243, 0.08)'
             }}>
-              <div style={{ 
-                backgroundColor: 'rgba(46, 117, 243, 0.1)', 
-                color: 'var(--primary-blue)', 
-                borderRadius: '50%', 
-                width: '40px', 
-                height: '40px', 
-                display: 'flex', 
-                alignItems: 'center', 
+              <div style={{
+                backgroundColor: 'rgba(46, 117, 243, 0.1)',
+                color: 'var(--primary-blue)',
+                borderRadius: '50%',
+                width: '40px',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0
               }}>
                 <Sparkles size={20} />
               </div>
               <div>
-                <h4 style={{ fontSize: '1rem', color: 'var(--text-dark)', marginBottom: '4px', fontWeight: '600' }}>Our Restoration Guarantee</h4>
+                <h4 style={{ fontSize: '1rem', color: 'var(--text-dark)', marginBottom: '4px', fontWeight: '600' }}>Our Pressure Washing Guarantee</h4>
                 <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', margin: 0, lineHeight: '1.5' }}>
-                  We don't just clean—we extract embedded grease, neutralize bacteria, and seal the grout lines with premium commercial-grade guard to prevent future staining and mold growth.
+                  We don't just rinse—we blast away years of embedded grime, black mold, algae, and oil stains. We restore original concrete color and can apply premium sealers to keep it clean for longer.
                 </p>
               </div>
             </div>
@@ -591,9 +532,9 @@ function Home() {
             {/* Gallery Item 1 */}
             <div className="glass-card" style={{ padding: '0', borderRadius: 'var(--br-lg)', overflow: 'hidden', boxShadow: 'var(--shadow-small)' }}>
               <div style={{ position: 'relative', overflow: 'hidden', aspectRatio: '4/3' }}>
-                <img 
-                  src={gallery1} 
-                  alt="Driveway Pressure Washing Before and After" 
+                <img
+                  src={gallery1}
+                  alt="Driveway Pressure Washing Before and After"
                   style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.5s ease' }}
                   onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
                   onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
@@ -608,9 +549,9 @@ function Home() {
             {/* Gallery Item 2 */}
             <div className="glass-card" style={{ padding: '0', borderRadius: 'var(--br-lg)', overflow: 'hidden', boxShadow: 'var(--shadow-small)' }}>
               <div style={{ position: 'relative', overflow: 'hidden', aspectRatio: '4/3' }}>
-                <img 
-                  src={gallery2} 
-                  alt="Outdoor Patio Tile Cleaning Before and After" 
+                <img
+                  src={gallery2}
+                  alt="Outdoor Patio Tile Cleaning Before and After"
                   style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.5s ease' }}
                   onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
                   onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
@@ -625,9 +566,9 @@ function Home() {
             {/* Gallery Item 3 */}
             <div className="glass-card" style={{ padding: '0', borderRadius: 'var(--br-lg)', overflow: 'hidden', boxShadow: 'var(--shadow-small)' }}>
               <div style={{ position: 'relative', overflow: 'hidden', aspectRatio: '4/3' }}>
-                <img 
-                  src={gallery3} 
-                  alt="Kitchen Tile & Grout Cleaning Before and After" 
+                <img
+                  src={gallery3}
+                  alt="Kitchen Tile & Grout Cleaning Before and After"
                   style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.5s ease' }}
                   onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
                   onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}

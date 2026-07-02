@@ -1,4 +1,11 @@
 <?php
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require_once __DIR__ . '/PHP Mailer/Exception.php';
+require_once __DIR__ . '/PHP Mailer/PHPMailer.php';
+require_once __DIR__ . '/PHP Mailer/SMTP.php';
+
 // Allow CORS for local development testing
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
@@ -109,66 +116,36 @@ $htmlContent .= '
 </body>
 </html>';
 
-// Secure Socket SMTP Email Sender Function
+// Secure Socket SMTP Email Sender Function via PHPMailer
 function send_smtp_email($to, $subject, $htmlContent, $fromEmail, $fromName) {
-    $smtpUser = "evgroutandcarpetcleaning@gmail.com";
-    $smtpPass = "iolc whei tond cdct";
-    $smtpHost = "ssl://smtp.gmail.com";
-    $smtpPort = 465;
-    $timeout = 15;
+    $mail = new PHPMailer(true);
 
-    $socket = fsockopen($smtpHost, $smtpPort, $errno, $errstr, $timeout);
-    if (!$socket) {
+    try {
+        // Server settings
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'evgroutandcarpetcleaning@gmail.com';
+        $mail->Password   = 'iolc whei tond cdct';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // Enable implicit TLS encryption (SSL)
+        $mail->Port       = 465;
+
+        // Recipients
+        $mail->setFrom('evgroutandcarpetcleaning@gmail.com', $fromName);
+        $mail->addAddress($to);
+        $mail->addReplyTo($fromEmail, $fromName);
+
+        // Content
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $htmlContent;
+
+        $mail->send();
+        return true;
+    } catch (Exception $e) {
+        error_log("PHPMailer error: " . $mail->ErrorInfo);
         return false;
     }
-
-    // Read greeting
-    fgets($socket, 512);
-
-    // EHLO
-    fwrite($socket, "EHLO localhost\r\n");
-    fgets($socket, 512);
-
-    // AUTH LOGIN
-    fwrite($socket, "AUTH LOGIN\r\n");
-    fgets($socket, 512);
-
-    // Send User
-    fwrite($socket, base64_encode($smtpUser) . "\r\n");
-    fgets($socket, 512);
-
-    // Send Pass
-    fwrite($socket, base64_encode($smtpPass) . "\r\n");
-    fgets($socket, 512);
-
-    // MAIL FROM
-    fwrite($socket, "MAIL FROM: <$smtpUser>\r\n");
-    fgets($socket, 512);
-
-    // RCPT TO
-    fwrite($socket, "RCPT TO: <$to>\r\n");
-    fgets($socket, 512);
-
-    // DATA
-    fwrite($socket, "DATA\r\n");
-    fgets($socket, 512);
-
-    // Build mail payload
-    $headers = "MIME-Version: 1.0\r\n";
-    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-    $headers .= "From: \"$fromName\" <$smtpUser>\r\n";
-    $headers .= "Reply-To: <$fromEmail>\r\n";
-    $headers .= "To: <$to>\r\n";
-    $headers .= "Subject: $subject\r\n";
-
-    fwrite($socket, $headers . "\r\n" . $htmlContent . "\r\n.\r\n");
-    fgets($socket, 512);
-
-    // QUIT
-    fwrite($socket, "QUIT\r\n");
-    fclose($socket);
-
-    return true;
 }
 
 // Send SMTP Email
